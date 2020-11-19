@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Enum, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from saleapp import db
+from flask_login import UserMixin
+from enum import Enum as UserEnum
 
 
 class SaleBase(db.Model):
@@ -25,6 +27,20 @@ class Product(SaleBase):
     image = Column(String(100))
     category_id = Column(Integer, ForeignKey(Category.id),
                          nullable=False)
+
+
+class UserRole(UserEnum):
+    USER = 1
+    ADMIN = 2
+
+
+class User(SaleBase, UserMixin):
+    email = Column(String(50))
+    username = Column(String(50), nullable=False, unique=True)
+    password = Column(String(50), nullable=False)
+    avatar = Column(String(100))
+    active = Column(Boolean, default=True)
+    user_role = Column(Enum(UserRole), default=UserRole.USER)
 
 
 if __name__ == '__main__':
