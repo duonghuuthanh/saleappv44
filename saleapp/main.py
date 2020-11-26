@@ -2,6 +2,7 @@ from flask import render_template, request, redirect
 from saleapp import app, utils, login
 from flask_login import login_user
 from saleapp.admin import *
+import os
 
 
 @app.route('/')
@@ -41,6 +42,33 @@ def login_usr():
             login_user(user=user)
 
     return redirect('/admin')
+
+
+@app.route('/register', methods=['get', 'post'])
+def register():
+    err_msg = ""
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm = request.form.get('confirm')
+        if password == confirm:
+            name = request.form.get('name')
+            email = request.form.get('email')
+            username = request.form.get('username')
+            avatar = request.files["avatar"]
+
+            avatar_path = 'images/upload/%s' % avatar.filename
+            avatar.save(os.path.join(app.root_path,
+                                     'static/',
+                                     avatar_path))
+            if utils.add_user(name=name, email=email, username=username,
+                              password=password, avatar_path=avatar_path):
+                return redirect('/')
+            else:
+                err_msg = "Hệ thống đang có lỗi! Vui lòng quay lại sau!"
+        else:
+            err_msg = "Mật khẩu KHÔNG khớp!"
+
+    return render_template('register.html', err_msg=err_msg)
 
 
 @login.user_loader
