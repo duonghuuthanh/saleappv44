@@ -1,8 +1,9 @@
-from flask import render_template, request, redirect
+from flask import render_template, request, \
+    redirect, session, jsonify
 from saleapp import app, utils, login
 from flask_login import login_user
 from saleapp.admin import *
-import os
+import os, json
 
 
 @app.route('/')
@@ -69,6 +70,39 @@ def register():
             err_msg = "Mật khẩu KHÔNG khớp!"
 
     return render_template('register.html', err_msg=err_msg)
+
+
+@app.route('/api/cart', methods=['post'])
+def cart():
+    if 'cart' not in session:
+        session['cart'] = {}
+
+    cart = session['cart']
+
+    data = json.loads(request.data)
+    id = str(data.get("id"))
+    name = data.get("name")
+    price = data.get("price")
+
+    if id in cart:
+        cart[id]["quantity"] = cart[id]["quantity"] + 1
+    else:
+        cart[id] = {
+            "id": id,
+            "name": name,
+            "price": price,
+            "quantity": 1
+        }
+
+    session['cart'] = cart
+
+    quan, price = utils.cart_stats(cart)
+
+    return jsonify({
+        "total_amount": price,
+        "total_quantity": quan
+    })
+
 
 
 @login.user_loader
