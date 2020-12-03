@@ -1,6 +1,7 @@
 import json, hashlib
-from saleapp.models import UserRole, User, Product
+from saleapp.models import UserRole, User, Product, Receipt, ReceiptDetail
 from saleapp import db
+from flask_login import current_user
 
 
 def read_data(path='data/categories.json'):
@@ -84,3 +85,24 @@ def cart_stats(cart):
             total_amount = total_amount + p["quantity"] * p["price"]
 
     return total_quantity, total_amount
+
+
+def add_receipt(cart):
+    if cart and current_user.is_authenticated:
+        receipt = Receipt(customer_id=current_user.id)
+        db.session.add(receipt)
+
+        for p in list(cart.values()):
+            detail = ReceiptDetail(receipt=receipt,
+                                   product_id=int(p["id"]),
+                                   quantity=p["quantity"],
+                                   price=p["price"])
+            db.session.add(detail)
+
+        try:
+            db.session.commit()
+            return True
+        except Exception as ex:
+            print(ex)
+
+    return False

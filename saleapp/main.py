@@ -4,6 +4,7 @@ from saleapp import app, utils, login
 from flask_login import login_user
 from saleapp.admin import *
 import os, json
+from saleapp import decorator
 
 
 @app.route('/')
@@ -103,6 +104,26 @@ def cart():
         "total_quantity": quan
     })
 
+
+@app.route('/payment')
+def payment():
+    quan, price = utils.cart_stats(session.get('cart'))
+    cart_info = {
+        "total_amount": price,
+        "total_quantity": quan
+    }
+    return render_template('payment.html',
+                           cart_info=cart_info)
+
+
+@app.route('/api/pay', methods=['post'])
+@decorator.login_required
+def pay():
+    if utils.add_receipt(session.get('cart')):
+        del session['cart']
+        return jsonify({'message': 'Add receipt successful!'})
+
+    return jsonify({'message': 'failed'})
 
 
 @login.user_loader
